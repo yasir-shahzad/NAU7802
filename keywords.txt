@@ -49,9 +49,9 @@ getBit	KEYWORD2
 getRegister	KEYWORD2
 setRegister	KEYWORD2
 
-#######################################
+######################################
 # Constants (LITERAL1)
-#######################################
+######################################
 
 NAU7802_PU_CTRL	LITERAL1
 NAU7802_CTRL1	LITERAL1

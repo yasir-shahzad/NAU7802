@@ -1,7 +1,7 @@
-SparkFun Qwiic Scale NAU7802 Library
+Linux based NAU7802 Library
 ===========================================================
 
- [![SparkFun Qwiic Scale - NAU7802 (SEN-15242)](https://cdn.sparkfun.com/assets/parts/1/3/7/0/0/Scale_Converted_to_Digital_-_SparkFun_Qwiic_Scale.jpg)](https://www.sparkfun.com/products/15242) 
+ [![NAU7802 (SEN-15242)](https://cdn.sparkfun.com/assets/parts/1/3/7/0/0/Scale_Converted_to_Digital_-_SparkFun_Qwiic_Scale.jpg)](https://www.sparkfun.com/products/15242) 
 
 [*SparkFun Qwiic Scale - NAU7802 (SEN-15242)*](https://www.sparkfun.com/products/15242)
 
