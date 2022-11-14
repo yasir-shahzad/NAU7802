@@ -20,11 +20,22 @@
   https://www.sparkfun.com/products/15242
 */
 
-#ifndef SparkFun_Qwiic_Scale_NAU7802_Arduino_Library_h
-#define SparkFun_Qwiic_Scale_NAU7802_Arduino_Library_h
+#ifndef _NAU7802_Library_h
+#define _NAU7802_Library_h
 
-#include "Arduino.h"
-#include <Wire.h>
+#include <fcntl.h>
+#include <i2c/smbus.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <math.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#include <iostream>
+
+using namespace std;
 
 //Register Map
 typedef enum
@@ -165,7 +176,7 @@ class NAU7802
 {
 public:
   NAU7802();                                               //Default constructor
-  bool begin(TwoWire &wirePort = Wire, bool reset = true); //Check communication and initialize sensor
+  bool begin(uint8_t i2c_bus=1, bool reset = true); //Check communication and initialize sensor
   bool isConnected();                                      //Returns true if device acks at the I2C address
 
   bool available();                          //Returns true if Cycle Ready bit is set (conversion is complete)
@@ -207,14 +218,16 @@ public:
   bool getBit(uint8_t bitNumber, uint8_t registerAddress);   //Return a given bit within a register
 
   uint8_t getRegister(uint8_t registerAddress);             //Get contents of a register
-  bool setRegister(uint8_t registerAddress, uint8_t value); //Send a given value to be written to given address. Return true if successful
+  bool setRegister(uint8_t registerAddress, uint8_t value); // Send a given value to be written to given address. Return true if successful
+  unsigned long millis();
+  unsigned long micros();
 
 private:
-  TwoWire *_i2cPort;                   //This stores the user's requested i2c port
-  const uint8_t _deviceAddress = 0x2A; //Default unshifted 7-bit address of the NAU7802
-
-  //y = mx+b
-  int32_t _zeroOffset;      //This is b
-  float _calibrationFactor; //This is m. User provides this number so that we can output y when requested
+  int fd;
+  const uint8_t _deviceAddress = 0x2A; // Default unshifted 7-bit address of the NAU7802
+  // y = mx+b
+  int32_t _zeroOffset;      // This is b
+  float _calibrationFactor; // This is m. User provides this number so that we can output y when requested
+  std::chrono::steady_clock::time_point refTime;
 };
 #endif

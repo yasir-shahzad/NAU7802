@@ -20,62 +20,80 @@
   https://www.sparkfun.com/products/15242
 */
 
-#include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h"
+#include "NAU7802.h"
 
 //Constructor
 NAU7802::NAU7802()
 {
+  refTime = std::chrono::steady_clock::now();
 }
 
 //Sets up the NAU7802 for basic function
 //If initialize is true (or not specified), default init and calibration is performed
 //If initialize is false, then it's up to the caller to initalize and calibrate
 //Returns true upon completion
-bool NAU7802::begin(TwoWire &wirePort, bool initialize)
+bool NAU7802::begin(uint8_t i2c_bus, bool initialize)
 {
-  //Get user's options
-  _i2cPort = &wirePort;
+    char device[32];
+    snprintf(device, sizeof(device), "/dev/i2c-%u", i2c_bus); // creating device address buffer
+    if ((fd = open(device, O_RDWR)) < 0)
+    {
+        printf("File descriptor opening error %s\n", strerror(errno));
+        return 0;
+    }
+    else
+    {
+        if (ioctl(fd, I2C_SLAVE, _deviceAddress) < 0)
+        {
+            std::cout << "Open fd error" << errno << std::endl;
+            return 0;
+        }
+        printf("I2C connection established\n");
+        return 1;
+    }
 
-  //Check if the device ack's over I2C
-  if (isConnected() == false)
-  {
-    //There are rare times when the sensor is occupied and doesn't ack. A 2nd try resolves this.
+    // Check if the device ack's over I2C
     if (isConnected() == false)
-      return (false);
-  }
+    {
+        // There are rare times when the sensor is occupied and doesn't ack. A 2nd try resolves this.
+        if (isConnected() == false)
+            return (false);
+    }
 
-  bool result = true; //Accumulate a result as we do the setup
+    bool result = true; // Accumulate a result as we do the setup
 
-  if (initialize)
-  {
-    result &= reset(); //Reset all registers
+    if (initialize)
+    {
+        result &= reset(); // Reset all registers
 
-    result &= powerUp(); //Power on analog and digital sections of the scale
+        result &= powerUp(); // Power on analog and digital sections of the scale
 
-    result &= setLDO(NAU7802_LDO_3V3); //Set LDO to 3.3V
+        result &= setLDO(NAU7802_LDO_3V3); // Set LDO to 3.3V
 
-    result &= setGain(NAU7802_GAIN_128); //Set gain to 128
+        result &= setGain(NAU7802_GAIN_128); // Set gain to 128
 
-    result &= setSampleRate(NAU7802_SPS_80); //Set samples per second to 10
+        result &= setSampleRate(NAU7802_SPS_80); // Set samples per second to 10
 
-    result &= setRegister(NAU7802_ADC, 0x30); //Turn off CLK_CHP. From 9.1 power on sequencing.
+        result &= setRegister(NAU7802_ADC, 0x30); // Turn off CLK_CHP. From 9.1 power on sequencing.
 
-    result &= setBit(NAU7802_PGA_PWR_PGA_CAP_EN, NAU7802_PGA_PWR); //Enable 330pF decoupling cap on chan 2. From 9.14 application circuit note.
+        result &= setBit(NAU7802_PGA_PWR_PGA_CAP_EN,
+                         NAU7802_PGA_PWR); // Enable 330pF decoupling cap on chan 2. From 9.14 application circuit note.
 
-    result &= calibrateAFE(); //Re-cal analog front end when we change gain, sample rate, or channel
-  }
+        result &= calibrateAFE(); // Re-cal analog front end when we change gain, sample rate, or channel
+    }
 
-  return (result);
+    return (result);
 }
 
 //Returns true if device is present
 //Tests for device ack to I2C address
 bool NAU7802::isConnected()
 {
-  _i2cPort->beginTransmission(_deviceAddress);
-  if (_i2cPort->endTransmission() != 0)
-    return (false); //Sensor did not ACK
-  return (true);    //All good
+   if (ioctl(fd, I2C_SLAVE, _deviceAddress) < 0) {
+        printf("Error While Opening I2C connection : 3, Error Number: %d", errno);
+        return 0; // Sensor did not ACK
+   }
+   return 1;  // All good
 }
 
 //Returns true if Cycle Ready bit is set (conversion is complete)
@@ -239,33 +257,30 @@ uint8_t NAU7802::getRevisionCode()
 //Assumes CR Cycle Ready bit (ADC conversion complete) has been checked to be 1
 int32_t NAU7802::getReading()
 {
-  _i2cPort->beginTransmission(_deviceAddress);
-  _i2cPort->write(NAU7802_ADCO_B2);
-  if (_i2cPort->endTransmission() != 0)
-    return (false); //Sensor did not ACK
+    uint8_t data[3];
+    uint32_t valueRaw;
+    uint8_t ret;
+    // read Current from register
+    ret = i2c_smbus_read_i2c_block_data(fd, NAU7802_ADCO_B2, sizeof(data), data);
+    // data[0] contains the length of the data
+    if (ret > 1) // number of bytes that were read
+    {
+        uint32_t valueRaw = (uint32_t)data[0] << 16; // MSB
+        valueRaw |= (uint32_t)data[1] << 8;          // MidSB
+        valueRaw |= (uint32_t)data[2];               // LSB
+        // the raw value coming from the ADC is a 24-bit number, so the sign bit now
+        // resides on bit 23 (0 is LSB) of the uint32_t container. By shifting the
+        // value to the left, I move the sign bit to the MSB of the uint32_t container.
+        // By casting to a signed int32_t container I now have properly recovered
+        // the sign of the original value
+        int32_t valueShifted = (int32_t)(valueRaw << 8);
+        // shift the number back right to recover its intended magnitude
+        int32_t value = (valueShifted >> 8);
 
-  _i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)3);
+        return (value);
+    }
 
-  if (_i2cPort->available())
-  {
-    uint32_t valueRaw = (uint32_t)_i2cPort->read() << 16; //MSB
-    valueRaw |= (uint32_t)_i2cPort->read() << 8;          //MidSB
-    valueRaw |= (uint32_t)_i2cPort->read();               //LSB
-
-    // the raw value coming from the ADC is a 24-bit number, so the sign bit now
-    // resides on bit 23 (0 is LSB) of the uint32_t container. By shifting the
-    // value to the left, I move the sign bit to the MSB of the uint32_t container.
-    // By casting to a signed int32_t container I now have properly recovered
-    // the sign of the original value
-    int32_t valueShifted = (int32_t)(valueRaw << 8);
-
-    // shift the number back right to recover its intended magnitude
-    int32_t value = (valueShifted >> 8);
-
-    return (value);
-  }
-
-  return (0); //Error
+    return (0); // Error
 }
 
 //Return the average of a given number of readings
@@ -387,27 +402,43 @@ bool NAU7802::getBit(uint8_t bitNumber, uint8_t registerAddress)
 //Get contents of a register
 uint8_t NAU7802::getRegister(uint8_t registerAddress)
 {
-  _i2cPort->beginTransmission(_deviceAddress);
-  _i2cPort->write(registerAddress);
-  if (_i2cPort->endTransmission() != 0)
-    return (-1); //Sensor did not ACK
-
-  _i2cPort->requestFrom((uint8_t)_deviceAddress, (uint8_t)1);
-
-  if (_i2cPort->available())
-    return (_i2cPort->read());
-
-  return (-1); //Error
+    uint8_t retVal;
+    retVal = i2c_smbus_read_byte_data(fd, registerAddress);
+    if (retVal < 0) {
+        printf("Error While reading Nau7802 I2C register, Error: %d", errno);
+        return -1;
+    }
+    else {
+        return retVal;
+    }
 }
 
 //Send a given value to be written to given address
 //Return true if successful
 bool NAU7802::setRegister(uint8_t registerAddress, uint8_t value)
 {
-  _i2cPort->beginTransmission(_deviceAddress);
-  _i2cPort->write(registerAddress);
-  _i2cPort->write(value);
-  if (_i2cPort->endTransmission() != 0)
-    return (false); //Sensor did not ACK
-  return (true);
+    uint8_t retVal;
+    retVal = i2c_smbus_write_byte_data(fd, registerAddress, value);
+    if (retVal < 0) {
+        printf("Error While setting Nau7802 I2C register, Error#: %d", errno);
+        return -1;
+    }
+
+    return 1;
+}
+
+unsigned long NAU7802::millis() {
+    unsigned long value_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - refTime).count();
+    return value_ms;
+}
+
+unsigned long NAU7802::micros() {
+    unsigned long value_us =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - refTime).count();
+    return value_us;
+}
+
+NAU7802::~NAU7802(){
+    close(fd);
 }
