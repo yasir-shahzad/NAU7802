@@ -259,14 +259,10 @@ int32_t NAU7802::getReading()
     uint32_t valueRaw;
     uint8_t ret;
     // read Current from register
-    ret = i2c_smbus_read_i2c_block_data(fd, NAU7802_ADCO_B2, /*sizeof(data)*/3, data);
+    ret = i2c_smbus_read_i2c_block_data(fd, NAU7802_ADCO_B2, sizeof(data), data);
     // data[0] contains the length of the data
     if (ret > 1) // number of bytes that were read
     {
-      //  for(int i=0; i<4; i++)
-      //    printf("rec[%d]:%u\n", i, data[i]);
-
-
         uint32_t valueRaw = (uint32_t)data[0] << 16; // MSB
         valueRaw |= (uint32_t)data[1] << 8;          // MidSB
         valueRaw |= (uint32_t)data[2];               // LSB
