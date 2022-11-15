@@ -26,7 +26,7 @@ int main()
         {
             long currentReading = myScale.getReading();
             // float currentWeight = myScale.getWeight();
-            cout << dec;
+            
             cout << "Reading: ";
             cout << currentReading << endl;
             //  cout << "\tWeight: ";
