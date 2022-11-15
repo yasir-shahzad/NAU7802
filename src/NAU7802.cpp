@@ -149,7 +149,7 @@ bool NAU7802::waitForCalibrateAFE(uint32_t timeout_ms)
     {
       break;
     }
-    delay(1);
+    usleep(1E3);
   }
 
   if (cal_ready == NAU7802_CAL_SUCCESS)
@@ -194,7 +194,7 @@ bool NAU7802::powerUp()
   {
     if (getBit(NAU7802_PU_CTRL_PUR, NAU7802_PU_CTRL) == true)
       break; //Good to go
-    delay(1);
+      usleep(1E3);
     if (counter++ > 100)
       return (false); //Error
   }
@@ -212,7 +212,7 @@ bool NAU7802::powerDown()
 bool NAU7802::reset()
 {
   setBit(NAU7802_PU_CTRL_RR, NAU7802_PU_CTRL); //Set RR
-  delay(1);
+  usleep(1E3);
   return (clearBit(NAU7802_PU_CTRL_RR, NAU7802_PU_CTRL)); //Clear RR to leave reset state
 }
 
@@ -301,7 +301,7 @@ int32_t NAU7802::getAverage(uint8_t averageAmount)
     }
     if (millis() - startTime > 1000)
       return (0); //Timeout - Bail with error
-    delay(1);
+      usleep(1E3);
   }
   total /= averageAmount;
 

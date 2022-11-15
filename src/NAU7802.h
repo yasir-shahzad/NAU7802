@@ -23,8 +23,11 @@
 #ifndef _NAU7802_Library_h
 #define _NAU7802_Library_h
 
-#include <fcntl.h>
+extern "C" {
 #include <i2c/smbus.h>
+}
+
+#include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <math.h>
@@ -32,8 +35,10 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-
 #include <iostream>
+#include <cstdlib>
+#include <errno.h>
+#include <chrono>
 
 using namespace std;
 
@@ -176,7 +181,8 @@ class NAU7802
 {
 public:
   NAU7802();                                               //Default constructor
-  bool begin(uint8_t i2c_bus=1, bool reset = true); //Check communication and initialize sensor
+  ~NAU7802();                                              //Default destructor
+  bool begin(uint8_t i2c_bus = 1, bool reset = true);      // Check communication and initialize sensor
   bool isConnected();                                      //Returns true if device acks at the I2C address
 
   bool available();                          //Returns true if Cycle Ready bit is set (conversion is complete)

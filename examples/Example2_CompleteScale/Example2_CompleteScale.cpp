@@ -8,7 +8,7 @@ bool settingsDetected = false; // Used to prompt user to calibrate their scale
 // Create an array to take average of weights. This helps smooth out jitter.
 #define AVG_SIZE 4
 float avgWeights[AVG_SIZE];
-byte avgWeightSpot = 0;
+uint8_t avgWeightSpot = 0;
 
 int main()
 {
