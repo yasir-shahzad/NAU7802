@@ -2,14 +2,6 @@
 
 NAU7802 myScale; // Create instance of the NAU7802 class
 
-
-bool settingsDetected = false; // Used to prompt user to calibrate their scale
-
-// Create an array to take average of weights. This helps smooth out jitter.
-#define AVG_SIZE 4
-float avgWeights[AVG_SIZE];
-uint8_t avgWeightSpot = 0;
-
 int main()
 {
     if (myScale.begin() == false)
@@ -33,16 +25,16 @@ int main()
         if (myScale.available() == true)
         {
             long currentReading = myScale.getReading();
-            float currentWeight = myScale.getWeight();
-
+            // float currentWeight = myScale.getWeight();
+            cout << dec;
             cout << "Reading: ";
-            cout << currentReading;
-            cout << "\tWeight: ";
-            cout << (currentWeight, 2) << endl; // Print 2 decimal places
+            cout << currentReading << endl;
+            //  cout << "\tWeight: ";
+            //  cout << (currentWeight, 2) << endl; // Print 2 decimal placesy
 
-            myScale.calculateZeroOffset();
-            cout << myScale.getZeroOffset() << endl;
-            usleep(500E3);
+            //  myScale.calculateZeroOffset();
+            // cout << myScale.getZeroOffset() << endl;
+            usleep(150E3);
         }
     }
     return 0;

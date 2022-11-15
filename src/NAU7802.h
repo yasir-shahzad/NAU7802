@@ -182,7 +182,7 @@ class NAU7802
 public:
   NAU7802();                                               //Default constructor
   ~NAU7802();                                              //Default destructor
-  bool begin(uint8_t i2c_bus = 1, bool reset = true);      // Check communication and initialize sensor
+  bool begin(uint8_t i2c_bus = 1, bool initialize = true);      // Check communication and initialize sensor
   bool isConnected();                                      //Returns true if device acks at the I2C address
 
   bool available();                          //Returns true if Cycle Ready bit is set (conversion is complete)
