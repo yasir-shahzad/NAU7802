@@ -1,6 +1,6 @@
 #include "../../src/NAU7802.h" // Click here to get the library: http://librarymanager/All#SparkFun_NAU8702
 
-NAU7802 myScale; // Create instance of the NAU7802 class
+NAU7802 myScale(1, 0x2A); // Create instance of the NAU7802 class
 
 int main()
 {
