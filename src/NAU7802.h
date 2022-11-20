@@ -180,9 +180,9 @@ typedef enum
 class NAU7802
 {
 public:
-  NAU7802();                                               //Default constructor
+  NAU7802(uint8_t i2c_bus, uint8_t i2c_addr= 0x2A);                                               //Default constructor
   ~NAU7802();                                              //Default destructor
-  bool begin(uint8_t i2c_bus = 1, bool initialize = true);      // Check communication and initialize sensor
+  bool begin(bool initialize = true);      // Check communication and initialize sensor
   bool isConnected();                                      //Returns true if device acks at the I2C address
 
   bool available();                          //Returns true if Cycle Ready bit is set (conversion is complete)
@@ -230,7 +230,9 @@ public:
 
 private:
   int fd;
-  const uint8_t _deviceAddress = 0x2A; // Default unshifted 7-bit address of the NAU7802
+  uint8_t buffer[3];
+  uint8_t i2c_bus;  //I2C bus for NaU7802
+  uint8_t i2c_addr; // Default unshifted 7-bit address of the NAU7802
   // y = mx+b
   int32_t _zeroOffset;      // This is b
   float _calibrationFactor; // This is m. User provides this number so that we can output y when requested

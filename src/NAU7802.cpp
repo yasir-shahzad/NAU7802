@@ -23,16 +23,18 @@
 #include "NAU7802.h"
 
 //Constructor
-NAU7802::NAU7802()
+NAU7802::NAU7802(uint8_t i2c_bus, uint8_t i2c_addr)
 {
-  refTime = std::chrono::steady_clock::now();
+    this->i2c_addr = i2c_addr;
+    this-> i2c_bus = i2c_bus;
+    refTime = std::chrono::steady_clock::now();
 }
 
 //Sets up the NAU7802 for basic function
 //If initialize is true (or not specified), default init and calibration is performed
 //If initialize is false, then it's up to the caller to initalize and calibrate
 //Returns true upon completion
-bool NAU7802::begin(uint8_t i2c_bus, bool initialize)
+bool NAU7802::begin(bool initialize)
 {
     char device[32];
     snprintf(device, sizeof(device), "/dev/i2c-%u", i2c_bus); // creating device address buffer
@@ -42,7 +44,7 @@ bool NAU7802::begin(uint8_t i2c_bus, bool initialize)
         return 0;
     }
     else {
-        if (ioctl(fd, I2C_SLAVE, _deviceAddress) < 0)
+        if (ioctl(fd, I2C_SLAVE, i2c_addr) < 0)
         {
             std::cout << "Open fd error" << errno << std::endl;
             return 0;
@@ -87,7 +89,7 @@ bool NAU7802::begin(uint8_t i2c_bus, bool initialize)
 //Tests for device ack to I2C address
 bool NAU7802::isConnected()
 {
-   if (ioctl(fd, I2C_SLAVE, _deviceAddress) < 0) {
+   if (ioctl(fd, I2C_SLAVE, i2c_addr) < 0) {
         printf("Error While Opening I2C connection : 3, Error Number: %d", errno);
         return 0; // Sensor did not ACK
    }
