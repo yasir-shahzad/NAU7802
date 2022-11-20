@@ -192,11 +192,13 @@ bool NAU7802::powerUp()
   uint8_t counter = 0;
   while (1)
   {
-    if (getBit(NAU7802_PU_CTRL_PUR, NAU7802_PU_CTRL) == true)
+    if (getBit(NAU7802_PU_CTRL_PUR, NAU7802_PU_CTRL) == true) {
       break; //Good to go
+    }
       usleep(1E3);
-    if (counter++ > 100)
+    if (counter++ > 100) {
       return (false); //Error
+    }
   }
   return (true);
 }
@@ -258,7 +260,6 @@ uint8_t NAU7802::getRevisionCode()
 int32_t NAU7802::getReading()
 {
     uint8_t data[3];
-    uint32_t valueRaw;
     uint8_t ret;
     // read Current from register
     ret = i2c_smbus_read_i2c_block_data(fd, NAU7802_ADCO_B2, sizeof(data), data);
@@ -299,8 +300,9 @@ int32_t NAU7802::getAverage(uint8_t averageAmount)
       if (++samplesAquired == averageAmount)
         break; //All done
     }
-    if (millis() - startTime > 1000)
+    if (millis() - startTime > 1000) {
       return (0); //Timeout - Bail with error
+    }
       usleep(1E3);
   }
   total /= averageAmount;
@@ -402,14 +404,14 @@ bool NAU7802::getBit(uint8_t bitNumber, uint8_t registerAddress)
 //Get contents of a register
 uint8_t NAU7802::getRegister(uint8_t registerAddress)
 {
-    uint8_t retVal;
+    int32_t retVal;
     retVal = i2c_smbus_read_byte_data(fd, registerAddress);
     if (retVal < 0) {
         printf("Error While reading Nau7802 I2C register, Error: %d", errno);
-        return -1;
+        return 0;
     }
     else {
-        return retVal;
+        return (uint8_t)retVal;
     }
 }
 
@@ -417,11 +419,11 @@ uint8_t NAU7802::getRegister(uint8_t registerAddress)
 //Return true if successful
 bool NAU7802::setRegister(uint8_t registerAddress, uint8_t value)
 {
-    uint8_t retVal;
+    int32_t retVal;
     retVal = i2c_smbus_write_byte_data(fd, registerAddress, value);
     if (retVal < 0) {
         printf("Error While setting Nau7802 I2C register, Error#: %d", errno);
-        return -1;
+        return 0;
     }
 
     return 1;
