@@ -90,7 +90,7 @@ bool NAU7802::begin(bool initialize)
 bool NAU7802::isConnected()
 {
    if (ioctl(fd, I2C_SLAVE, i2c_addr) < 0) {
-        printf("Error While Opening I2C connection : 3, Error Number: %d", errno);
+        printf("Error While Opening I2C connection : 3, Error Number: %d\n", errno);
         return 0; // Sensor did not ACK
    }
    return 1;  // All good
@@ -407,7 +407,7 @@ uint8_t NAU7802::getRegister(uint8_t registerAddress)
     int32_t retVal;
     retVal = i2c_smbus_read_byte_data(fd, registerAddress);
     if (retVal < 0) {
-        printf("Error While reading Nau7802 I2C register, Error: %d", errno);
+        printf("Error While reading Nau7802 I2C register, Error: %d\n", errno);
         return 0;
     }
     else {
@@ -422,7 +422,7 @@ bool NAU7802::setRegister(uint8_t registerAddress, uint8_t value)
     int32_t retVal;
     retVal = i2c_smbus_write_byte_data(fd, registerAddress, value);
     if (retVal < 0) {
-        printf("Error While setting Nau7802 I2C register, Error#: %d", errno);
+        printf("Error While setting Nau7802 I2C register, Error#: %d\n", errno);
         return 0;
     }
 
